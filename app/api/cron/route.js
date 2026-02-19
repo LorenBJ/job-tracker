@@ -1,10 +1,4 @@
 export async function GET(request) {
-  // Verificar que la llamada viene de Vercel y no de alguien externo
-  const authHeader = request.headers.get("authorization")
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
   try {
     const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
 
@@ -17,6 +11,7 @@ export async function GET(request) {
     const data = await res.json()
     return Response.json({ ok: true, data })
   } catch (error) {
+    console.log("CRON ERROR:", error.message)
     return Response.json({ error: error.message }, { status: 500 })
   }
 }
