@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk"
 import * as cheerio from "cheerio"
+export const maxDuration = 30
+
 
 const anthropic = new Anthropic()
 
