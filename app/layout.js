@@ -13,26 +13,58 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      <body className={`${geist.className} bg-gray-950 text-white`}>
+      <body className={`${geist.className} bg-gray-950 text-gray-100`}>
         <div className="flex min-h-screen">
 
           {/* Sidebar */}
-          <aside className="w-56 bg-gray-900 border-r border-gray-800 p-6 flex flex-col gap-2">
-            <h1 className="text-xl font-bold text-blue-400 mb-6">Job Tracker 🎯</h1>
-            <Link href="/" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition">
-              <Search size={18} /> Dashboard
-            </Link>
-            <Link href="/ofertas" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition">
-              <Briefcase size={18} /> Ofertas
-            </Link>
-            <Link href="/perfil" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition">
-              <User size={18} /> Mi Perfil
-            </Link>
+          <aside className="w-64 bg-gray-900 border-r border-gray-800 px-6 py-8 flex flex-col">
+            
+            {/* Logo */}
+            <h1 className="text-2xl font-semibold text-blue-400 mb-10 tracking-tight">
+              Job Tracker 🎯
+            </h1>
+
+            {/* Navigation */}
+            <nav className="space-y-2 text-sm">
+              
+              <Link
+                href="/"
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800 transition"
+              >
+                <Search size={18} />
+                Dashboard
+              </Link>
+
+              <Link
+                href="/ofertas"
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800 transition"
+              >
+                <Briefcase size={18} />
+                Ofertas
+              </Link>
+
+              <Link
+                href="/perfil"
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800 transition"
+              >
+                <User size={18} />
+                Mi Perfil
+              </Link>
+
+            </nav>
+
+            {/* Footer sidebar */}
+            <div className="mt-auto pt-8 text-xs text-gray-500">
+              Hecho para optimizar tu búsqueda laboral 🚀
+            </div>
+
           </aside>
 
-          {/* Contenido principal */}
-          <main className="flex-1 p-8 bg-gray-950">
-            {children}
+          {/* Main content */}
+          <main className="flex-1 bg-gray-950 px-6 md:px-10 py-10">
+            <div className="max-w-4xl mx-auto space-y-8">
+              {children}
+            </div>
           </main>
 
         </div>
