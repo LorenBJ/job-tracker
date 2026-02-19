@@ -5,6 +5,7 @@ import { Search, Loader } from "lucide-react"
 export default function Home() {
   const [cv, setCv] = useState("")
   const [rol, setRol] = useState("")
+  const [ubicacion, setUbicacion] = useState("capital-federal")
   const [resultado, setResultado] = useState(null)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState(null)
@@ -27,7 +28,7 @@ export default function Home() {
       const res = await fetch("/api/buscar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv, rol }),
+        body: JSON.stringify({ cv, rol, ubicacion }),
       })
 
       const data = await res.json()
@@ -67,6 +68,32 @@ export default function Home() {
           value={rol}
           onChange={(e) => setRol(e.target.value)}
         />
+      </div>
+
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+        <label className="text-sm text-gray-400 block mb-2">Ubicación</label>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setUbicacion("capital-federal")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              ubicacion === "capital-federal"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-800 text-gray-400 hover:text-white"
+            }`}
+          >
+            Capital Federal
+          </button>
+          <button
+            onClick={() => setUbicacion("buenos-aires-gba")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              ubicacion === "buenos-aires-gba"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-800 text-gray-400 hover:text-white"
+            }`}
+          >
+            Buenos Aires / GBA
+          </button>
+        </div>
       </div>
 
       {error && (
