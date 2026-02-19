@@ -92,11 +92,13 @@ export async function POST(request) {
     console.log("ANTHROPIC OK")
 
     console.log("LLAMANDO A TELEGRAM...")
-    await fetch(`${process.env.NEXT_PUBLIC_URL}/api/telegram`, {
+    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        mensaje: `🎯 <b>Ofertas del día - Computrabajo</b>\n\n${analisis}`,
+        chat_id: process.env.TELEGRAM_CHAT_ID,
+        text: `🎯 <b>Ofertas del día - Computrabajo</b>\n\n${analisis}`,
+        parse_mode: "HTML",
       }),
     })
     console.log("TELEGRAM OK")
