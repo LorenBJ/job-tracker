@@ -4,6 +4,7 @@ import { Search, Loader } from "lucide-react"
 
 export default function Home() {
   const [cv, setCv] = useState("")
+  const [rol, setRol] = useState("")
   const [resultado, setResultado] = useState(null)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState(null)
@@ -11,6 +12,10 @@ export default function Home() {
   async function buscar() {
     if (!cv) {
       setError("Pegá tu CV antes de buscar")
+      return
+    }
+    if (!rol) {
+      setError("Escribí el rol que estás buscando")
       return
     }
 
@@ -22,7 +27,7 @@ export default function Home() {
       const res = await fetch("/api/buscar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv }),
+        body: JSON.stringify({ cv, rol }),
       })
 
       const data = await res.json()
@@ -51,6 +56,16 @@ export default function Home() {
           placeholder="Pegá el texto de tu CV acá..."
           value={cv}
           onChange={(e) => setCv(e.target.value)}
+        />
+      </div>
+
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+        <label className="text-sm text-gray-400 block mb-1">¿Qué rol buscás?</label>
+        <input
+          className="w-full bg-gray-800 text-gray-300 rounded-lg p-3 text-sm border border-gray-700 focus:outline-none focus:border-blue-500"
+          placeholder="Ej: contador, diseñador gráfico, soporte técnico..."
+          value={rol}
+          onChange={(e) => setRol(e.target.value)}
         />
       </div>
 

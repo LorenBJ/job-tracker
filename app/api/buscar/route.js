@@ -5,13 +5,61 @@ export const maxDuration = 30
 
 const anthropic = new Anthropic()
 
-async function buscarOfertasComputrabajo() {
-  const url = "https://ar.computrabajo.com/empleos-de-informatica-y-telecom-en-capital-federal?by=publicationtime"
+const CATEGORIAS = {
+  "marketing-ventas": "https://ar.computrabajo.com/empleos-de-marketing-y-ventas-en-capital-federal",
+  "produccion-operaciones": "https://ar.computrabajo.com/empleos-de-produccion-operaciones-en-capital-federal",
+  "almacen-logistica": "https://ar.computrabajo.com/empleos-de-almacen-logistica-en-capital-federal",
+  "mantenimiento": "https://ar.computrabajo.com/empleos-de-mantenimiento-y-reparaciones-tecnicas-en-capital-federal",
+  "otros": "https://ar.computrabajo.com/empleos-de-otros-en-capital-federal",
+  "informatica-telecom": "https://ar.computrabajo.com/empleos-de-informatica-y-telecom-en-capital-federal",
+  "administracion": "https://ar.computrabajo.com/empleos-de-administracion-y-oficina-en-capital-federal",
+  "atencion-clientes": "https://ar.computrabajo.com/empleos-de-atencion-a-clientes-en-capital-federal",
+  "hosteleria-turismo": "https://ar.computrabajo.com/empleos-de-hosteleria-y-turismo-en-capital-federal",
+  "medicina-salud": "https://ar.computrabajo.com/empleos-de-medicina-y-salud-en-capital-federal",
+  "contabilidad": "https://ar.computrabajo.com/empleos-de-economia-y-contabilidad-en-capital-federal",
+  "servicios-generales": "https://ar.computrabajo.com/empleos-de-servicios-generales-aseo-y-seguridad-en-capital-federal",
+  "callcenter": "https://ar.computrabajo.com/empleos-de-callcenter-telemercadeo-en-capital-federal",
+  "construccion": "https://ar.computrabajo.com/empleos-de-construccion-y-obra-en-capital-federal",
+  "ingenieria": "https://ar.computrabajo.com/empleos-de-ingenieria-y-tecnico-en-capital-federal",
+  "recursos-humanos": "https://ar.computrabajo.com/empleos-de-recursos-humanos-en-capital-federal",
+  "publicidad-comunicacion": "https://ar.computrabajo.com/empleos-de-mercadeo-publicidad-comunicacion-en-capital-federal",
+  "compras": "https://ar.computrabajo.com/empleos-de-compras-comercio-exterior-en-capital-federal",
+  "arte-diseno": "https://ar.computrabajo.com/empleos-de-arte-y-diseno-y-medios-en-capital-federal",
+  "gerencia": "https://ar.computrabajo.com/empleos-de-direccion-y-gerencia-en-capital-federal",
+  "ciencia": "https://ar.computrabajo.com/empleos-de-cientifico-y-investigacion-en-capital-federal",
+  "educacion": "https://ar.computrabajo.com/empleos-de-educacion-y-universidad-en-capital-federal",
+  "legal": "https://ar.computrabajo.com/empleos-de-legal-y-asesoria-en-capital-federal",
+}
 
-  const res = await fetch(url, {
+async function detectarCategoria(rol) {
+  const mensaje = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 50,
+    messages: [
+      {
+        role: "user",
+        content: `Dado el rol "${rol}", elegí la categoría más adecuada de esta lista y respondé SOLO con la clave, sin explicación:
+
+marketing-ventas, produccion-operaciones, almacen-logistica, mantenimiento, otros, informatica-telecom, administracion, atencion-clientes, hosteleria-turismo, medicina-salud, contabilidad, servicios-generales, callcenter, construccion, ingenieria, recursos-humanos, publicidad-comunicacion, compras, arte-diseno, gerencia, ciencia, educacion, legal`,
+      },
+    ],
+  })
+
+  const categoria = mensaje.content[0].text.trim()
+  console.log("CATEGORIA DETECTADA:", categoria)
+  return CATEGORIAS[categoria] || CATEGORIAS["otros"]
+}
+
+async function buscarOfertasComputrabajo(url) {
+  const res = await fetch(url + "?by=publicationtime", {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept-Language": "es-AR,es;q=0.9",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+      "Accept-Language": "es-AR,es;q=0.9,en;q=0.8",
+      "Accept-Encoding": "gzip, deflate, br",
+      "Connection": "keep-alive",
+      "Upgrade-Insecure-Requests": "1",
+      "Cache-Control": "max-age=0",
     },
   })
 
@@ -36,25 +84,25 @@ async function buscarOfertasComputrabajo() {
   return ofertas
 }
 
-async function analizarCompatibilidad(ofertas, cvTexto) {
+async function analizarCompatibilidad(ofertas, cvTexto, rol) {
   const mensaje = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 1500,
     messages: [
       {
         role: "user",
-        content: `Sos un experto en recursos humanos especializado en tecnología.
+        content: `Sos un experto en recursos humanos.
 
 Tenés este CV:
 ${cvTexto}
 
-El candidato busca posiciones de soporte técnico IT en Buenos Aires.
+El candidato busca posiciones de: ${rol}
 
 Tu tarea es analizar las siguientes ofertas de Computrabajo y determinar cuáles son genuinamente compatibles con el perfil, considerando:
-- Títulos equivalentes: "soporte técnico", "helpdesk", "mesa de ayuda", "técnico IT", "soporte IT", "analista de soporte", "soporte N1/N2" y similares
+- El título puede variar pero debe ser equivalente al rol buscado o muy cercano
 - Evaluá la descripción completa, no solo el título
-- Descartá ofertas que no tengan componente técnico real
-- Considerá las tecnologías y experiencia del CV
+- Descartá ofertas que no tengan relación real con el rol buscado
+- Considerá la experiencia, habilidades y tecnologías del CV
 
 Ofertas disponibles:
 ${ofertas.map((o, i) => `${i + 1}. ${o.titulo} - ${o.empresa} (${o.ubicacion})
@@ -68,7 +116,7 @@ Para cada oferta compatible incluí:
 - Por qué encaja con el perfil
 - Link para postularse
 
-Descartá las que no son técnicas. Listá máximo 5 ordenadas de mayor a menor compatibilidad.`,
+Descartá las que no son compatibles. Listá máximo 5 ordenadas de mayor a menor compatibilidad.`,
       },
     ],
   })
@@ -77,10 +125,14 @@ Descartá las que no son técnicas. Listá máximo 5 ordenadas de mayor a menor 
 }
 
 export async function POST(request) {
-  const { cv } = await request.json()
+  const { cv, rol } = await request.json()
 
   try {
-    const ofertas = await buscarOfertasComputrabajo()
+    console.log("DETECTANDO CATEGORIA...")
+    const urlCategoria = await detectarCategoria(rol)
+    console.log("URL:", urlCategoria)
+
+    const ofertas = await buscarOfertasComputrabajo(urlCategoria)
     console.log("OFERTAS OK:", ofertas.length)
 
     if (ofertas.length === 0) {
@@ -88,7 +140,7 @@ export async function POST(request) {
     }
 
     console.log("LLAMANDO A ANTHROPIC...")
-    const analisis = await analizarCompatibilidad(ofertas, cv)
+    const analisis = await analizarCompatibilidad(ofertas, cv, rol)
     console.log("ANTHROPIC OK")
 
     console.log("LLAMANDO A TELEGRAM...")
@@ -97,7 +149,7 @@ export async function POST(request) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: process.env.TELEGRAM_CHAT_ID,
-        text: `🎯 <b>Ofertas del día - Computrabajo</b>\n\n${analisis}`,
+        text: `🎯 <b>Ofertas para: ${rol}</b>\n\n${analisis}`,
         parse_mode: "HTML",
       }),
     })
