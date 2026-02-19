@@ -6,6 +6,7 @@ export default function Home() {
   const [cv, setCv] = useState("")
   const [rol, setRol] = useState("")
   const [ubicacion, setUbicacion] = useState("capital-federal")
+  const [categoria, setCategoria] = useState("tecnologia")
   const [resultado, setResultado] = useState(null)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState(null)
@@ -28,7 +29,7 @@ export default function Home() {
       const res = await fetch("/api/buscar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv, rol, ubicacion }),
+        body: JSON.stringify({ cv, rol, ubicacion, categoria }),
       })
 
       const data = await res.json()
@@ -68,6 +69,27 @@ export default function Home() {
           value={rol}
           onChange={(e) => setRol(e.target.value)}
         />
+      </div>
+
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+        <label className="text-sm text-gray-400 block mb-2">Categoría</label>
+        <select
+          className="w-full bg-gray-800 text-gray-300 rounded-lg p-3 text-sm border border-gray-700 focus:outline-none focus:border-blue-500"
+          value={categoria}
+          onChange={(e) => setCategoria(e.target.value)}
+        >
+          <option value="tecnologia">Tecnología</option>
+          <option value="administracion-finanzas">Administración y Finanzas</option>
+          <option value="ventas-marketing">Ventas y Marketing</option>
+          <option value="atencion-cliente">Atención al Cliente</option>
+          <option value="recursos-humanos">Recursos Humanos</option>
+          <option value="ingenieria-tecnico">Ingeniería y Técnico</option>
+          <option value="salud">Salud</option>
+          <option value="educacion">Educación</option>
+          <option value="arte-diseno">Arte y Diseño</option>
+          <option value="logistica-produccion">Logística y Producción</option>
+          <option value="otros">Otros</option>
+        </select>
       </div>
 
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
