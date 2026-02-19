@@ -81,24 +81,29 @@ export async function POST(request) {
 
   try {
     const ofertas = await buscarOfertasComputrabajo()
+    console.log("OFERTAS OK:", ofertas.length)
 
     if (ofertas.length === 0) {
       return Response.json({ error: "No se encontraron ofertas" }, { status: 404 })
     }
 
+    console.log("LLAMANDO A ANTHROPIC...")
     const analisis = await analizarCompatibilidad(ofertas, cv)
+    console.log("ANTHROPIC OK")
 
-    await fetch(`http://localhost:3000/api/telegram`, {
+    console.log("LLAMANDO A TELEGRAM...")
+    await fetch(`${process.env.NEXT_PUBLIC_URL}/api/telegram`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         mensaje: `🎯 <b>Ofertas del día - Computrabajo</b>\n\n${analisis}`,
       }),
     })
+    console.log("TELEGRAM OK")
 
     return Response.json({ ofertas, analisis })
   } catch (error) {
-    console.log("ERROR:", error.message)
+    console.log("ERROR DETALLADO:", error.message, error.cause)
     return Response.json({ error: error.message }, { status: 500 })
   }
 }
