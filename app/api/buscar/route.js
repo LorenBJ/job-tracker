@@ -157,9 +157,15 @@ Máximo 5 ofertas compatibles ordenadas de mayor a menor compatibilidad.`,
 }
 
 async function guardarOfertasEnSupabase(ofertas) {
-  if (!ofertas || ofertas.length === 0) return
+  if (!ofertas || ofertas.length === 0) {
+    console.log("NO HAY OFERTAS PARA GUARDAR")
+    return
+  }
 
-  const { error } = await supabase
+  console.log("INTENTANDO GUARDAR:", ofertas.length, "ofertas")
+  console.log("PRIMERA OFERTA:", JSON.stringify(ofertas[0]))
+
+  const { data, error } = await supabase
     .from("ofertas")
     .insert(
       ofertas.map(o => ({
@@ -173,8 +179,8 @@ async function guardarOfertasEnSupabase(ofertas) {
       }))
     )
 
-  if (error) console.log("ERROR guardando en Supabase:", error.message)
-  else console.log("Ofertas guardadas en Supabase:", ofertas.length)
+  if (error) console.log("ERROR SUPABASE:", JSON.stringify(error))
+  else console.log("GUARDADO OK:", ofertas.length)
 }
 
 export async function POST(request) {
