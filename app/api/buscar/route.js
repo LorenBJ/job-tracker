@@ -115,48 +115,46 @@ ${cvTexto}
 
 El candidato busca posiciones de: ${rol}
 
-Tu tarea es analizar las siguientes ofertas y determinar cuáles son genuinamente compatibles con el perfil, considerando:
-- El título puede variar pero debe ser equivalente al rol buscado o muy cercano
-- Evaluá la descripción completa, no solo el título
-- Descartá ofertas que no tengan relación real con el rol buscado
-- Considerá la experiencia, habilidades y tecnologías del CV
+Analizá las siguientes ofertas y devolvé ÚNICAMENTE un array JSON con las compatibles (máximo 5, ordenadas de mayor a menor compatibilidad). Sin markdown, sin texto adicional, solo el array.
+
+Formato exacto:
+[
+  {
+    "titulo": "título de la oferta",
+    "empresa": "nombre de la empresa",
+    "ubicacion": "ubicación",
+    "link": "link completo",
+    "fuente": "Computrabajo",
+    "fecha": "fecha de publicación",
+    "motivo": "una sola oración explicando por qué encaja con el perfil"
+  }
+]
 
 Ofertas disponibles:
 ${ofertas.map((o, i) => `${i + 1}. ${o.titulo} - ${o.empresa} (${o.ubicacion})
 Publicado: ${o.fecha}
 Descripción: ${o.descripcion}
-Link: ${o.link}`).join("\n\n")}
-
-Respondé ÚNICAMENTE con un JSON válido, sin markdown, sin bloques de código, sin texto adicional. El formato exacto es:
-{
-  "html": "el análisis en HTML usando <b> para resaltar, con título, empresa, por qué encaja y link. IMPORTANTE: en los atributos href usá comillas dobles escapadas así: href=\\"url\\"",
-  "ofertas": [
-    {
-      "titulo": "título de la oferta",
-      "empresa": "nombre de la empresa",
-      "ubicacion": "ubicación",
-      "link": "link completo",
-      "fuente": "Computrabajo",
-      "fecha": "fecha de publicación"
-    }
-  ]
-}
-
-Máximo 5 ofertas compatibles ordenadas de mayor a menor compatibilidad.`,
+Link: ${o.link}`).join("\n\n")}`,
       },
     ],
   })
 
   const texto = mensaje.content[0].text
-  console.log("RESPUESTA CLAUDE RAW:", texto)
+  console.log("RESPUESTA CLAUDE RAW:", texto.slice(0, 300))
   try {
     const limpio = texto.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
-    const resultado = JSON.parse(limpio)
-    console.log("OFERTAS PARSEADAS:", resultado.ofertas?.length)
-    return resultado
+    const ofertasCompatibles = JSON.parse(limpio)
+    console.log("OFERTAS PARSEADAS:", ofertasCompatibles.length)
+
+    const medallas = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
+    const html = ofertasCompatibles.map((o, i) =>
+      `${medallas[i] || ""} <b>${o.titulo}</b> - ${o.empresa}\n📍 ${o.ubicacion}\n${o.motivo}\n<a href="${o.link}">Ver oferta</a>`
+    ).join("\n\n")
+
+    return { html, ofertas: ofertasCompatibles }
   } catch (e) {
     console.log("ERROR PARSE:", e.message)
-    return { html: texto, ofertas: [] }
+    return { html: "", ofertas: [] }
   }
 }
 
@@ -169,7 +167,7 @@ async function guardarOfertasEnSupabase(ofertas) {
   console.log("INTENTANDO GUARDAR:", ofertas.length, "ofertas")
   console.log("PRIMERA OFERTA:", JSON.stringify(ofertas[0]))
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("ofertas")
     .insert(
       ofertas.map(o => ({
