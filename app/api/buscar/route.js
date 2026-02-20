@@ -123,9 +123,8 @@ Tu tarea es analizar las siguientes ofertas y determinar cuáles son genuinament
 - Solo incluí como compatible si el candidato puede postularse HOY con su experiencia actual
 - Sé estricto: es mejor devolver pocas ofertas realmente compatibles que incluir de más
 
-Devolvé ÚNICAMENTE un array JSON, sin markdown, sin texto adicional. Incluí TODAS las ofertas en el array, tanto las compatibles como las descartadas.
+Devolvé ÚNICAMENTE un array JSON con las ofertas COMPATIBLES solamente (máximo 5). Sin markdown, sin texto adicional, solo el array.
 
-Formato exacto:
 [
   {
     "titulo": "título de la oferta",
@@ -134,13 +133,9 @@ Formato exacto:
     "link": "link completo",
     "fuente": "Computrabajo",
     "fecha": "fecha de publicación",
-    "compatible": true,
-    "motivo": "2 o 3 oraciones detallando por qué encaja, mencionando habilidades específicas del CV que coinciden"
+    "motivo": "2 o 3 oraciones detallando por qué encaja, mencionando habilidades específicas del CV"
   }
 ]
-
-Para las NO compatibles usá "compatible": false y en "motivo" explicá brevemente por qué no encaja.
-Máximo 5 compatibles, ordenadas de mayor a menor compatibilidad.
 
 Ofertas disponibles:
 ${ofertas.map((o, i) => `${i + 1}. ${o.titulo} - ${o.empresa} (${o.ubicacion})
@@ -155,23 +150,15 @@ Link: ${o.link}`).join("\n\n")}`,
   console.log("RESPUESTA CLAUDE RAW:", texto.slice(0, 300))
   try {
     const limpio = texto.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
-    const todasLasOfertas = JSON.parse(limpio)
-    console.log("OFERTAS PARSEADAS:", todasLasOfertas.length)
-
-    const ofertasCompatibles = todasLasOfertas.filter(o => o.compatible)
-    const ofertasDescartadas = todasLasOfertas.filter(o => !o.compatible)
+    const ofertasCompatibles = JSON.parse(limpio)
+    console.log("OFERTAS PARSEADAS:", ofertasCompatibles.length)
 
     const medallas = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
-    let html = ofertasCompatibles.slice(0, 5).map((o, i) =>
+    const html = ofertasCompatibles.map((o, i) =>
       `${medallas[i] || ""} <b>${o.titulo}</b>\n🏢 ${o.empresa} | 📍 ${o.ubicacion}\n\n${o.motivo}\n\n🔗 <a href="${o.link}">Ver oferta</a>`
     ).join("\n\n---\n\n")
 
-    if (ofertasDescartadas.length > 0) {
-      html += "\n\n---\n\n<b>❌ Descartadas:</b>\n"
-      html += ofertasDescartadas.map(o => `• <b>${o.titulo}</b>: ${o.motivo}`).join("\n")
-    }
-
-    return { html, ofertas: ofertasCompatibles.slice(0, 5) }
+    return { html, ofertas: ofertasCompatibles }
   } catch (e) {
     console.log("ERROR PARSE:", e.message)
     return { html: "", ofertas: [] }
