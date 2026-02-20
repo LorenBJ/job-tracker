@@ -1,8 +1,15 @@
 import Anthropic from "@anthropic-ai/sdk"
 import * as cheerio from "cheerio"
+import { createClient } from "@supabase/supabase-js"
+
 export const maxDuration = 30
 
 const anthropic = new Anthropic()
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 const CATEGORIAS = {
   "tecnologia": [
@@ -152,7 +159,7 @@ async function buscarOfertasBumeran(categoria, ubicacion) {
 async function analizarCompatibilidad(ofertas, cvTexto, rol) {
   const mensaje = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 1500,
+    max_tokens: 2000,
     messages: [
       {
         role: "user",
@@ -175,18 +182,54 @@ Publicado: ${o.fecha}
 Descripción: ${o.descripcion}
 Link: ${o.link}`).join("\n\n")}
 
-Respondé en español con formato HTML usando <b> para resaltar.
-Para cada oferta compatible incluí:
-- <b>Título y empresa</b> [fuente]
-- Por qué encaja con el perfil
-- Link para postularse
+Respondé con un JSON con este formato exacto (sin markdown, solo el JSON):
+{
+  "html": "el análisis completo en HTML usando <b> para resaltar, con título, empresa, por qué encaja y link para cada oferta compatible",
+  "ofertas": [
+    {
+      "titulo": "título de la oferta",
+      "empresa": "nombre de la empresa",
+      "ubicacion": "ubicación",
+      "link": "link completo",
+      "fuente": "Computrabajo o Bumeran",
+      "fecha": "fecha de publicación"
+    }
+  ]
+}
 
-Descartá las que no son compatibles. Listá máximo 5 ordenadas de mayor a menor compatibilidad.`,
+Máximo 5 ofertas compatibles, ordenadas de mayor a menor compatibilidad. El campo "ofertas" debe contener solo las compatibles.`,
       },
     ],
   })
 
-  return mensaje.content[0].text
+  const texto = mensaje.content[0].text
+  try {
+    return JSON.parse(texto)
+  } catch {
+    // Si no devuelve JSON válido, devolvemos el texto como HTML y array vacío
+    return { html: texto, ofertas: [] }
+  }
+}
+
+async function guardarOfertasEnSupabase(ofertas) {
+  if (!ofertas || ofertas.length === 0) return
+
+  const { error } = await supabase
+    .from("ofertas")
+    .insert(
+      ofertas.map(o => ({
+        titulo: o.titulo,
+        empresa: o.empresa,
+        ubicacion: o.ubicacion,
+        link: o.link,
+        fuente: o.fuente,
+        fecha: o.fecha,
+        postulado: false,
+      }))
+    )
+
+  if (error) console.log("ERROR guardando en Supabase:", error.message)
+  else console.log("Ofertas guardadas en Supabase:", ofertas.length)
 }
 
 export async function POST(request) {
@@ -207,8 +250,12 @@ export async function POST(request) {
       return Response.json({ error: "No se encontraron ofertas" }, { status: 404 })
     }
 
-    const analisis = await analizarCompatibilidad(ofertas, cv, rol)
+    const { html: analisis, ofertas: ofertasCompatibles } = await analizarCompatibilidad(ofertas, cv, rol)
 
+    // Guardar en Supabase (sin bloquear la respuesta si falla)
+    await guardarOfertasEnSupabase(ofertasCompatibles)
+
+    // Mandar por Telegram
     await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -219,7 +266,12 @@ export async function POST(request) {
       }),
     })
 
-    return Response.json({ ofertas, analisis })
+    // Respuesta simplificada - el detalle está en la pestaña Ofertas
+    return Response.json({ 
+      mensaje: `✅ Búsqueda completada. Se encontraron ${ofertasCompatibles.length} ofertas compatibles. Revisá la pestaña Ofertas.`,
+      cantidad: ofertasCompatibles.length
+    })
+
   } catch (error) {
     console.log("ERROR DETALLADO:", error.message, error.cause)
     return Response.json({ error: error.message }, { status: 500 })

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.77.0",
+    "@supabase/supabase-js": "^2.97.0",
     "axios": "^1.13.5",
     "cheerio": "^1.2.0",
     "lucide-react": "^0.574.0",

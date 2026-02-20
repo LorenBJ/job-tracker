@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { Search, Loader } from "lucide-react"
+import { Search, Loader, CheckCircle } from "lucide-react"
 
 export default function Home() {
   const [cv, setCv] = useState("")
@@ -130,16 +130,22 @@ export default function Home() {
         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white px-6 py-3 rounded-xl transition font-medium mb-8"
       >
         {cargando ? <Loader size={18} className="animate-spin" /> : <Search size={18} />}
-        {cargando ? "Buscando en Computrabajo..." : "Buscar ofertas"}
+        {cargando ? "Buscando..." : "Buscar ofertas"}
       </button>
 
       {resultado && (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-blue-400 mb-4">Análisis de Claude</h3>
-          <div
-            className="text-gray-300 text-sm leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: resultado.analisis }}
-          />
+        <div className="bg-green-900/20 border border-green-700 rounded-xl p-6 flex items-start gap-4">
+          <CheckCircle size={24} className="text-green-400 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-green-400 font-semibold text-lg">{resultado.mensaje}</p>
+            <p className="text-gray-400 text-sm mt-1">
+              También te mandamos el resumen por Telegram. Hacé clic en{" "}
+              <a href="/ofertas" className="text-blue-400 hover:underline font-medium">
+                Ofertas
+              </a>{" "}
+              para ver el listado y marcar las que ya enviaste.
+            </p>
+          </div>
         </div>
       )}
     </div>
