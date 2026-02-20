@@ -52,6 +52,25 @@ const CATEGORIAS = {
   ],
 }
 
+const BUMERAN_AREAS = {
+  "tecnologia": "tecnologia-sistemas-y-telecomunicaciones",
+  "administracion-finanzas": "administracion-contabilidad-y-finanzas",
+  "ventas-marketing": "comercial-ventas-y-negocios",
+  "atencion-cliente": "atencion-al-cliente-call-center-y-telemarketing",
+  "recursos-humanos": "recursos-humanos-y-capacitacion",
+  "ingenieria-tecnico": "ingenieria-civil-y-construccion",
+  "salud": "salud-medicina-y-farmacia",
+  "educacion": "oficios-y-otros",
+  "arte-diseno": "marketing-y-publicidad",
+  "logistica-produccion": "abastecimiento-y-logistica",
+  "otros": "oficios-y-otros",
+}
+
+const BUMERAN_LOCALIDADES = {
+  "capital-federal": "argentina|buenos-aires|capital-federal",
+  "buenos-aires-gba": "argentina|buenos-aires|gran-buenos-aires",
+}
+
 function obtenerUrls(categoria, ubicacion) {
   const urls = CATEGORIAS[categoria] || CATEGORIAS["otros"]
   return urls.map(url => url.replace("en-capital-federal", `en-${ubicacion}`))
@@ -82,7 +101,7 @@ async function buscarOfertasComputrabajo(urls) {
         const fecha = $(el).find("p.date").text().trim()
         const link = "https://ar.computrabajo.com" + $(el).find("h2 a").attr("href")
         const descripcion = $(el).find("p.description").text().trim()
-        if (titulo) ofertas.push({ titulo, empresa, ubicacion, fecha, link, descripcion })
+        if (titulo) ofertas.push({ titulo, empresa, ubicacion, fecha, link, descripcion, fuente: "Computrabajo" })
       })
 
       return ofertas
@@ -92,6 +111,42 @@ async function buscarOfertasComputrabajo(urls) {
   const todas = resultados.flat()
   console.log("OFERTAS COMPUTRABAJO:", todas.length)
   return todas
+}
+
+async function buscarOfertasBumeran(categoria, ubicacion) {
+  const area = BUMERAN_AREAS[categoria] || BUMERAN_AREAS["otros"]
+  const localidad = BUMERAN_LOCALIDADES[ubicacion] || BUMERAN_LOCALIDADES["capital-federal"]
+
+  const res = await fetch("https://www.bumeran.com.ar/api/avisos/searchV2?pageSize=20&page=0&sort=RECIENTES", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Origin": "https://www.bumeran.com.ar",
+      "Referer": "https://www.bumeran.com.ar/",
+    },
+    body: JSON.stringify({
+      filtros: [
+        { id: "area", value: area },
+        { id: "localidad", value: localidad },
+        { id: "provincia", value: "argentina|buenos-aires" },
+      ]
+    })
+  })
+
+  const data = await res.json()
+  const ofertas = (data.content || []).map(o => ({
+    titulo: o.titulo,
+    empresa: o.confidencial ? "Confidencial" : o.empresa,
+    ubicacion: o.localizacion,
+    fecha: o.fechaPublicacion,
+    link: `https://www.bumeran.com.ar/empleos/id-${o.id}.html`,
+    descripcion: o.detalle?.replace(/<[^>]*>/g, "").slice(0, 500) || "",
+    fuente: "Bumeran",
+  }))
+
+  console.log("OFERTAS BUMERAN:", ofertas.length)
+  return ofertas
 }
 
 async function analizarCompatibilidad(ofertas, cvTexto, rol) {
@@ -108,21 +163,21 @@ ${cvTexto}
 
 El candidato busca posiciones de: ${rol}
 
-Tu tarea es analizar las siguientes ofertas de Computrabajo y determinar cuáles son genuinamente compatibles con el perfil, considerando:
+Tu tarea es analizar las siguientes ofertas y determinar cuáles son genuinamente compatibles con el perfil, considerando:
 - El título puede variar pero debe ser equivalente al rol buscado o muy cercano
 - Evaluá la descripción completa, no solo el título
 - Descartá ofertas que no tengan relación real con el rol buscado
 - Considerá la experiencia, habilidades y tecnologías del CV
 
 Ofertas disponibles:
-${ofertas.map((o, i) => `${i + 1}. ${o.titulo} - ${o.empresa} (${o.ubicacion})
+${ofertas.map((o, i) => `${i + 1}. [${o.fuente}] ${o.titulo} - ${o.empresa} (${o.ubicacion})
 Publicado: ${o.fecha}
 Descripción: ${o.descripcion}
 Link: ${o.link}`).join("\n\n")}
 
 Respondé en español con formato HTML usando <b> para resaltar.
 Para cada oferta compatible incluí:
-- <b>Título y empresa</b>
+- <b>Título y empresa</b> [fuente]
 - Por qué encaja con el perfil
 - Link para postularse
 
@@ -139,10 +194,14 @@ export async function POST(request) {
 
   try {
     const urls = obtenerUrls(categoria, ubicacion)
-    console.log("URLS:", urls)
 
-    const ofertas = await buscarOfertasComputrabajo(urls)
-    console.log("OFERTAS OK:", ofertas.length)
+    const [ofertasComputrabajo, ofertasBumeran] = await Promise.all([
+      buscarOfertasComputrabajo(urls),
+      buscarOfertasBumeran(categoria, ubicacion),
+    ])
+
+    const ofertas = [...ofertasComputrabajo, ...ofertasBumeran]
+    console.log("TOTAL OFERTAS:", ofertas.length)
 
     if (ofertas.length === 0) {
       return Response.json({ error: "No se encontraron ofertas" }, { status: 404 })
