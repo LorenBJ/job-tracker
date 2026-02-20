@@ -129,7 +129,7 @@ Link: ${o.link}`).join("\n\n")}
 
 Respondé ÚNICAMENTE con un JSON válido, sin markdown, sin bloques de código, sin texto adicional. El formato exacto es:
 {
-  "html": "el análisis en HTML usando <b> para resaltar, con título, empresa, por qué encaja y link para cada oferta compatible",
+  "html": "el análisis en HTML usando <b> para resaltar, con título, empresa, por qué encaja y link. IMPORTANTE: en los atributos href usá comillas dobles escapadas así: href=\\"url\\"",
   "ofertas": [
     {
       "titulo": "título de la oferta",
@@ -150,8 +150,12 @@ Máximo 5 ofertas compatibles ordenadas de mayor a menor compatibilidad.`,
   const texto = mensaje.content[0].text
   console.log("RESPUESTA CLAUDE RAW:", texto)
   try {
-    return JSON.parse(texto)
-  } catch {
+    const limpio = texto.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
+    const resultado = JSON.parse(limpio)
+    console.log("OFERTAS PARSEADAS:", resultado.ofertas?.length)
+    return resultado
+  } catch (e) {
+    console.log("ERROR PARSE:", e.message)
     return { html: texto, ofertas: [] }
   }
 }
