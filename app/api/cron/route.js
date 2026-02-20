@@ -5,7 +5,12 @@ export async function GET(request) {
     const res = await fetch(`${baseUrl}/api/buscar`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cv: process.env.CV_TEXTO }),
+      body: JSON.stringify({
+        cv: process.env.CV_TEXTO,
+        rol: process.env.CV_ROL || "soporte tecnico",
+        categoria: process.env.CV_CATEGORIA || "tecnologia",
+        ubicacion: process.env.CV_UBICACION || "capital-federal",
+      }),
     })
 
     const data = await res.json()
