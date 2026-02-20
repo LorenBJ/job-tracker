@@ -55,14 +55,7 @@ export default function OfertasPage() {
               onChange={() => marcarPostulado(oferta.id)}
             />
             <div className="flex-1">
-              
-                href={oferta.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 font-semibold hover:underline text-lg"
-              >
-                {oferta.titulo}
-              </a>
+              <a href={oferta.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold hover:underline text-lg">{oferta.titulo}</a>
               <p className="text-gray-700 mt-1">{oferta.empresa}</p>
               <div className="flex gap-4 mt-1 text-sm text-gray-500">
                 <span>📍 {oferta.ubicacion}</span>
