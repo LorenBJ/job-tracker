@@ -59,25 +59,6 @@ const CATEGORIAS = {
   ],
 }
 
-const BUMERAN_AREAS = {
-  "tecnologia": "tecnologia-sistemas-y-telecomunicaciones",
-  "administracion-finanzas": "administracion-contabilidad-y-finanzas",
-  "ventas-marketing": "comercial-ventas-y-negocios",
-  "atencion-cliente": "atencion-al-cliente-call-center-y-telemarketing",
-  "recursos-humanos": "recursos-humanos-y-capacitacion",
-  "ingenieria-tecnico": "ingenieria-civil-y-construccion",
-  "salud": "salud-medicina-y-farmacia",
-  "educacion": "oficios-y-otros",
-  "arte-diseno": "marketing-y-publicidad",
-  "logistica-produccion": "abastecimiento-y-logistica",
-  "otros": "oficios-y-otros",
-}
-
-const BUMERAN_LOCALIDADES = {
-  "capital-federal": "argentina|buenos-aires|capital-federal",
-  "buenos-aires-gba": "argentina|buenos-aires|gran-buenos-aires",
-}
-
 function obtenerUrls(categoria, ubicacion) {
   const urls = CATEGORIAS[categoria] || CATEGORIAS["otros"]
   return urls.map(url => url.replace("en-capital-federal", `en-${ubicacion}`))
@@ -120,42 +101,6 @@ async function buscarOfertasComputrabajo(urls) {
   return todas
 }
 
-async function buscarOfertasBumeran(categoria, ubicacion) {
-  const area = BUMERAN_AREAS[categoria] || BUMERAN_AREAS["otros"]
-  const localidad = BUMERAN_LOCALIDADES[ubicacion] || BUMERAN_LOCALIDADES["capital-federal"]
-
-  const res = await fetch("https://www.bumeran.com.ar/api/avisos/searchV2?pageSize=20&page=0&sort=RECIENTES", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Origin": "https://www.bumeran.com.ar",
-      "Referer": "https://www.bumeran.com.ar/",
-    },
-    body: JSON.stringify({
-      filtros: [
-        { id: "area", value: area },
-        { id: "localidad", value: localidad },
-        { id: "provincia", value: "argentina|buenos-aires" },
-      ]
-    })
-  })
-
-  const data = await res.json()
-  const ofertas = (data.content || []).map(o => ({
-    titulo: o.titulo,
-    empresa: o.confidencial ? "Confidencial" : o.empresa,
-    ubicacion: o.localizacion,
-    fecha: o.fechaPublicacion,
-    link: `https://www.bumeran.com.ar/empleos/id-${o.id}.html`,
-    descripcion: o.detalle?.replace(/<[^>]*>/g, "").slice(0, 500) || "",
-    fuente: "Bumeran",
-  }))
-
-  console.log("OFERTAS BUMERAN:", ofertas.length)
-  return ofertas
-}
-
 async function analizarCompatibilidad(ofertas, cvTexto, rol) {
   const mensaje = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
@@ -177,36 +122,36 @@ Tu tarea es analizar las siguientes ofertas y determinar cuáles son genuinament
 - Considerá la experiencia, habilidades y tecnologías del CV
 
 Ofertas disponibles:
-${ofertas.map((o, i) => `${i + 1}. [${o.fuente}] ${o.titulo} - ${o.empresa} (${o.ubicacion})
+${ofertas.map((o, i) => `${i + 1}. ${o.titulo} - ${o.empresa} (${o.ubicacion})
 Publicado: ${o.fecha}
 Descripción: ${o.descripcion}
 Link: ${o.link}`).join("\n\n")}
 
-Respondé con un JSON con este formato exacto (sin markdown, solo el JSON):
+Respondé ÚNICAMENTE con un JSON válido, sin markdown, sin bloques de código, sin texto adicional. El formato exacto es:
 {
-  "html": "el análisis completo en HTML usando <b> para resaltar, con título, empresa, por qué encaja y link para cada oferta compatible",
+  "html": "el análisis en HTML usando <b> para resaltar, con título, empresa, por qué encaja y link para cada oferta compatible",
   "ofertas": [
     {
       "titulo": "título de la oferta",
       "empresa": "nombre de la empresa",
       "ubicacion": "ubicación",
       "link": "link completo",
-      "fuente": "Computrabajo o Bumeran",
+      "fuente": "Computrabajo",
       "fecha": "fecha de publicación"
     }
   ]
 }
 
-Máximo 5 ofertas compatibles, ordenadas de mayor a menor compatibilidad. El campo "ofertas" debe contener solo las compatibles.`,
+Máximo 5 ofertas compatibles ordenadas de mayor a menor compatibilidad.`,
       },
     ],
   })
 
   const texto = mensaje.content[0].text
+  console.log("RESPUESTA CLAUDE RAW:", texto)
   try {
     return JSON.parse(texto)
   } catch {
-    // Si no devuelve JSON válido, devolvemos el texto como HTML y array vacío
     return { html: texto, ofertas: [] }
   }
 }
@@ -237,13 +182,8 @@ export async function POST(request) {
 
   try {
     const urls = obtenerUrls(categoria, ubicacion)
+    const ofertas = await buscarOfertasComputrabajo(urls)
 
-    const [ofertasComputrabajo, ofertasBumeran] = await Promise.all([
-      buscarOfertasComputrabajo(urls),
-      buscarOfertasBumeran(categoria, ubicacion),
-    ])
-
-    const ofertas = [...ofertasComputrabajo, ...ofertasBumeran]
     console.log("TOTAL OFERTAS:", ofertas.length)
 
     if (ofertas.length === 0) {
@@ -252,10 +192,8 @@ export async function POST(request) {
 
     const { html: analisis, ofertas: ofertasCompatibles } = await analizarCompatibilidad(ofertas, cv, rol)
 
-    // Guardar en Supabase (sin bloquear la respuesta si falla)
     await guardarOfertasEnSupabase(ofertasCompatibles)
 
-    // Mandar por Telegram
     await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -266,8 +204,7 @@ export async function POST(request) {
       }),
     })
 
-    // Respuesta simplificada - el detalle está en la pestaña Ofertas
-    return Response.json({ 
+    return Response.json({
       mensaje: `✅ Búsqueda completada. Se encontraron ${ofertasCompatibles.length} ofertas compatibles. Revisá la pestaña Ofertas.`,
       cantidad: ofertasCompatibles.length
     })
