@@ -1,15 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk"
 import * as cheerio from "cheerio"
 import { createClient } from "@supabase/supabase-js"
+import { createSupabaseServer } from "@/lib/supabase"
 
 export const maxDuration = 30
 
 const anthropic = new Anthropic()
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
 
 const CATEGORIAS = {
   "tecnologia": [
@@ -170,7 +166,7 @@ async function guardarOfertasEnSupabase(ofertas, userId) {
 
   const supabaseServer = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY  // service key para bypass RLS desde el servidor
+    process.env.SUPABASE_SERVICE_KEY
   )
 
   const { error } = await supabaseServer
@@ -185,6 +181,7 @@ async function guardarOfertasEnSupabase(ofertas, userId) {
         fecha: o.fecha,
         postulado: false,
         user_id: userId,
+        motivo: o.motivo,
       }))
     )
 
@@ -196,7 +193,6 @@ export async function POST(request) {
   const { cv, rol, ubicacion, categoria } = await request.json()
 
   try {
-    // Obtener usuario de la sesión
     const supabaseServer = await createSupabaseServer()
     const { data: { user } } = await supabaseServer.auth.getUser()
     const userId = user?.id || null
