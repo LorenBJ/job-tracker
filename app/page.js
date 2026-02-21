@@ -1,6 +1,7 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search, Loader, CheckCircle } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 export default function Home() {
   const [cv, setCv] = useState("")
@@ -10,6 +11,28 @@ export default function Home() {
   const [resultado, setResultado] = useState(null)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    cargarPerfilGuardado()
+  }, [])
+
+  async function cargarPerfilGuardado() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from("perfiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single()
+
+    if (data) {
+      if (data.cv_texto) setCv(data.cv_texto)
+      if (data.rol) setRol(data.rol)
+      if (data.categoria) setCategoria(data.categoria)
+      if (data.ubicacion) setUbicacion(data.ubicacion)
+    }
+  }
 
   async function buscar() {
     if (!cv) {
