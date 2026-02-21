@@ -13,22 +13,25 @@ export default function Login() {
   const router = useRouter()
 
   async function handleSubmit() {
-    setCargando(true)
-    setError(null)
-    setMensaje(null)
+  setCargando(true)
+  setError(null)
+  setMensaje(null)
 
-    if (modo === "login") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError("Email o contraseña incorrectos")
-      else router.push("/")
-    } else {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) setError("Error al registrarse: " + error.message)
-      else setMensaje("¡Cuenta creada! Revisá tu email para confirmar.")
+  if (modo === "login") {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setError("Email o contraseña incorrectos")
+    } else if (data.session) {
+      window.location.href = "/"
     }
-
-    setCargando(false)
+  } else {
+    const { error } = await supabase.auth.signUp({ email, password })
+    if (error) setError("Error al registrarse: " + error.message)
+    else setMensaje("¡Cuenta creada! Ya podés iniciar sesión.")
   }
+
+  setCargando(false)
+}
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
