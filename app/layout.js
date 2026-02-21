@@ -1,9 +1,7 @@
-// app/layout.js
+"use client"
 import "./globals.css";
 import Link from "next/link";
 import { Briefcase, LayoutDashboard, User, Kanban } from "lucide-react";
-
-export const metadata = { title: "Job Tracker", description: "Optimizá tu búsqueda laboral" };
 
 export default function RootLayout({ children }) {
   return (
@@ -53,11 +51,9 @@ export default function RootLayout({ children }) {
               <p className="text-[11px] text-gray-600 mb-3">v1.0 · Búsqueda potenciada con IA</p>
               <button
                 onClick={async () => {
-                  const { createClient } = await import("@supabase/supabase-js")
-                  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-                  await sb.auth.signOut()
+                  await supabase.auth.signOut()
                   window.location.href = "/login"
-                }}
+                }}  
                 className="text-[12px] text-red-500/60 hover:text-red-400 transition-colors"
               >
                 Cerrar sesión
