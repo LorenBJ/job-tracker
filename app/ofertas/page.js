@@ -10,6 +10,7 @@ const supabase = createClient(
 export default function OfertasPage() {
   const [ofertas, setOfertas] = useState([])
   const [cargando, setCargando] = useState(true)
+  const [pendientesDeEliminar, setPendientesDeEliminar] = useState({})
 
   useEffect(() => {
     cargarOfertas()
@@ -20,7 +21,6 @@ export default function OfertasPage() {
     const { data, error } = await supabase
       .from("ofertas")
       .select("*")
-      .eq("postulado", false)
       .order("created_at", { ascending: false })
 
     if (!error) setOfertas(data)
@@ -28,12 +28,26 @@ export default function OfertasPage() {
   }
 
   async function marcarPostulado(id) {
-    await supabase
-      .from("ofertas")
-      .update({ postulado: true })
-      .eq("id", id)
+    const timer = setTimeout(async () => {
+      await supabase.from("ofertas").delete().eq("id", id)
+      setPendientesDeEliminar(prev => {
+        const nuevo = { ...prev }
+        delete nuevo[id]
+        return nuevo
+      })
+      setOfertas(prev => prev.filter(o => o.id !== id))
+    }, 5000)
 
-    setOfertas(prev => prev.filter(o => o.id !== id))
+    setPendientesDeEliminar(prev => ({ ...prev, [id]: timer }))
+  }
+
+  function revertir(id) {
+    clearTimeout(pendientesDeEliminar[id])
+    setPendientesDeEliminar(prev => {
+      const nuevo = { ...prev }
+      delete nuevo[id]
+      return nuevo
+    })
   }
 
   return (
@@ -48,12 +62,18 @@ export default function OfertasPage() {
 
       <div className="flex flex-col gap-4">
         {ofertas.map(oferta => (
-          <div key={oferta.id} className="border rounded-xl p-4 shadow-sm flex gap-4 items-start bg-white">
-            <input
-              type="checkbox"
-              className="mt-1 w-5 h-5 cursor-pointer accent-green-500"
-              onChange={() => marcarPostulado(oferta.id)}
-            />
+          <div key={oferta.id} className={`border rounded-xl p-4 shadow-sm flex gap-4 items-start bg-white transition-opacity ${pendientesDeEliminar[oferta.id] ? "opacity-50" : "opacity-100"}`}>
+            <div className="mt-1">
+              {pendientesDeEliminar[oferta.id] ? (
+                <input type="checkbox" className="w-5 h-5 accent-green-500" checked readOnly />
+              ) : (
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 cursor-pointer accent-green-500"
+                  onChange={() => marcarPostulado(oferta.id)}
+                />
+              )}
+            </div>
             <div className="flex-1">
               <a href={oferta.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold hover:underline text-lg">{oferta.titulo}</a>
               <p className="text-gray-700 mt-1">{oferta.empresa}</p>
@@ -62,6 +82,17 @@ export default function OfertasPage() {
                 <span>🗓 {oferta.fecha}</span>
                 <span className="bg-gray-100 px-2 py-0.5 rounded">{oferta.fuente}</span>
               </div>
+              {pendientesDeEliminar[oferta.id] && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-yellow-600 text-sm">⏳ Marcada como postulada...</span>
+                  <button
+                    onClick={() => revertir(oferta.id)}
+                    className="text-xs text-blue-500 hover:underline font-medium"
+                  >
+                    Revertir
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}
