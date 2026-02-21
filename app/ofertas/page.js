@@ -46,7 +46,7 @@ export default function Ofertas() {
           <Briefcase size={13} style={{ color: "#60A5FA" }} />
           <span style={{ fontSize: "11px", color: "#60A5FA", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}>Ofertas compatibles</span>
         </div>
-        <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "28px", color: "white", marginBottom: "6px" }}>
+        <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: "28px", color: "white", marginBottom: "6px" }}>
           {ofertas.length === 0 ? "Sin ofertas pendientes" : `${ofertas.length} oferta${ofertas.length !== 1 ? "s" : ""}`}
         </h1>
         <p style={{ color: "#6B7280", fontSize: "14px" }}>Marcá las que ya enviaste para mantener tu lista limpia.</p>
