@@ -55,7 +55,7 @@ export default function Home() {
           <Zap size={13} className="text-blue-400" />
           <span style={{ fontSize: "11px", color: "#60A5FA", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}>IA · Computrabajo</span>
         </div>
-        <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "28px", color: "white", marginBottom: "6px", lineHeight: 1.2 }}>Buscar ofertas</h1>
+        <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: "28px", color: "white", marginBottom: "6px", lineHeight: 1.2 }}>Buscar ofertas</h1>
         <p style={{ color: "#6B7280", fontSize: "14px" }}>Claude analiza y filtra las ofertas más compatibles con tu perfil.</p>
       </div>
 

@@ -20,13 +20,13 @@ export default function Ofertas() {
   }
 
   async function marcarPostulado(id) {
-    const timer = setTimeout(async () => {
-      await supabase.from("ofertas").delete().eq("id", id)
-      setPendientes(prev => { const n = { ...prev }; delete n[id]; return n })
-      setOfertas(prev => prev.filter(o => o.id !== id))
-    }, 5000)
-    setPendientes(prev => ({ ...prev, [id]: timer }))
-  }
+  const timer = setTimeout(async () => {
+    await supabase.from("ofertas").update({ postulado: true, estado: "postulado" }).eq("id", id)
+    setPendientes(prev => { const n = { ...prev }; delete n[id]; return n })
+    setOfertas(prev => prev.filter(o => o.id !== id))
+  }, 5000)
+  setPendientes(prev => ({ ...prev, [id]: timer }))
+}
 
   function revertir(id) {
     clearTimeout(pendientes[id])
