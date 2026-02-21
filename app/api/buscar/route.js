@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk"
 import * as cheerio from "cheerio"
 import { createClient } from "@supabase/supabase-js"
-import { createSupabaseServer } from "@/lib/supabase"
+import { createSupabaseServer } from "@/lib/supabase-server"
 
 export const maxDuration = 30
 
