@@ -1,14 +1,11 @@
+"use client"
 import { Geist } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { Briefcase, User, Search } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const geist = Geist({ subsets: ["latin"] });
-
-export const metadata = {
-  title: "Job Tracker",
-  description: "Tu asistente de búsqueda laboral",
-};
 
 export default function RootLayout({ children }) {
   return (
@@ -54,8 +51,17 @@ export default function RootLayout({ children }) {
             </nav>
 
             {/* Footer sidebar */}
-            <div className="mt-auto pt-8 text-xs text-gray-500">
-              Hecho para optimizar tu búsqueda laboral 🚀
+            <div className="mt-auto pt-8 text-xs text-gray-500 space-y-3">
+              <p>Hecho para optimizar tu búsqueda laboral 🚀</p>
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut()
+                  window.location.href = "/login"
+                }}
+                className="text-red-400 hover:text-red-300 transition"
+              >
+                Cerrar sesión
+              </button>
             </div>
 
           </aside>
