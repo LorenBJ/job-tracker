@@ -1,4 +1,3 @@
-// app/page.js
 "use client"
 import { useState, useEffect } from "react"
 import { Search, Loader, CheckCircle, Zap } from "lucide-react"
@@ -44,28 +43,27 @@ export default function Home() {
     finally { setCargando(false) }
   }
 
-  const inputClass = "w-full bg-white/[0.03] text-gray-200 rounded-xl px-4 py-3 text-sm border border-white/8 focus:outline-none focus:border-blue-500/50 focus:bg-white/[0.05] transition-all placeholder:text-gray-600"
-  const cardClass = "bg-white/[0.02] border border-white/6 rounded-2xl p-6 mb-4"
+  const card = { background: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "24px", marginBottom: "16px" }
+  const inputStyle = { background: "#1a2235", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "10px 14px", color: "#e2e8f0", fontSize: "13px", width: "100%", outline: "none", fontFamily: "'DM Sans', sans-serif" }
+  const labelStyle = { fontSize: "11px", fontWeight: 500, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "10px" }
 
   return (
     <div>
       {/* Header */}
-      <div className="mb-10">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap size={14} className="text-blue-400" />
-          <span className="text-xs text-blue-400 font-medium tracking-widest uppercase">IA · Computrabajo</span>
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap size={13} className="text-blue-400" />
+          <span style={{ fontSize: "11px", color: "#60A5FA", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}>IA · Computrabajo</span>
         </div>
-        <h1 style={{ fontFamily: "'Syne', sans-serif" }} className="text-3xl font-800 text-white tracking-tight mb-2">
-          Buscar ofertas
-        </h1>
-        <p className="text-gray-500 text-sm">Claude analiza las ofertas y filtra las más compatibles con tu perfil.</p>
+        <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "28px", color: "white", marginBottom: "6px", lineHeight: 1.2 }}>Buscar ofertas</h1>
+        <p style={{ color: "#6B7280", fontSize: "14px" }}>Claude analiza y filtra las ofertas más compatibles con tu perfil.</p>
       </div>
 
       {/* CV */}
-      <div className={cardClass}>
-        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-3">Tu CV</label>
+      <div style={card}>
+        <label style={labelStyle}>Tu CV</label>
         <textarea
-          className={`${inputClass} h-44 resize-none`}
+          style={{ ...inputStyle, height: "160px", resize: "none" }}
           placeholder="Pegá el texto de tu CV acá..."
           value={cv}
           onChange={(e) => setCv(e.target.value)}
@@ -73,10 +71,10 @@ export default function Home() {
       </div>
 
       {/* Rol */}
-      <div className={cardClass}>
-        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-3">Rol buscado</label>
+      <div style={card}>
+        <label style={labelStyle}>Rol buscado</label>
         <input
-          className={inputClass}
+          style={inputStyle}
           placeholder="Ej: soporte técnico, diseñador UX, contador..."
           value={rol}
           onChange={(e) => setRol(e.target.value)}
@@ -84,10 +82,10 @@ export default function Home() {
       </div>
 
       {/* Categoría y Ubicación */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className={`${cardClass} mb-0`}>
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-3">Categoría</label>
-          <select className={inputClass} value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+        <div style={card}>
+          <label style={labelStyle}>Categoría</label>
+          <select style={inputStyle} value={categoria} onChange={(e) => setCategoria(e.target.value)}>
             <option value="tecnologia">Tecnología</option>
             <option value="administracion-finanzas">Administración y Finanzas</option>
             <option value="ventas-marketing">Ventas y Marketing</option>
@@ -102,18 +100,25 @@ export default function Home() {
           </select>
         </div>
 
-        <div className={`${cardClass} mb-0`}>
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-3">Ubicación</label>
-          <div className="flex flex-col gap-2">
+        <div style={{ ...card, marginBottom: 0 }}>
+          <label style={labelStyle}>Ubicación</label>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {[["capital-federal", "Capital Federal"], ["buenos-aires-gba", "Buenos Aires / GBA"]].map(([val, label]) => (
               <button
                 key={val}
                 onClick={() => setUbicacion(val)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  ubicacion === val
-                    ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
-                    : "bg-white/[0.03] text-gray-500 border border-white/6 hover:text-gray-300"
-                }`}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                  border: ubicacion === val ? "1px solid rgba(59,130,246,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                  background: ubicacion === val ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.03)",
+                  color: ubicacion === val ? "#60A5FA" : "#9CA3AF",
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
               >{label}</button>
             ))}
           </div>
@@ -121,7 +126,7 @@ export default function Home() {
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl px-4 py-3 mb-4 text-sm">
+        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", color: "#F87171", fontSize: "13px" }}>
           {error}
         </div>
       )}
@@ -129,21 +134,30 @@ export default function Home() {
       <button
         onClick={buscar}
         disabled={cargando}
-        className="flex items-center gap-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-white/5 disabled:text-gray-600 text-white text-sm font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30 mb-8"
+        style={{
+          display: "flex", alignItems: "center", gap: "8px",
+          background: cargando ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #3B82F6, #6366F1)",
+          color: cargando ? "#6B7280" : "white",
+          border: "none", borderRadius: "12px", padding: "12px 24px",
+          fontSize: "14px", fontWeight: 500, cursor: cargando ? "not-allowed" : "pointer",
+          transition: "all 0.2s", marginBottom: "24px",
+          boxShadow: cargando ? "none" : "0 4px 20px rgba(59,130,246,0.3)",
+          fontFamily: "'DM Sans', sans-serif",
+        }}
       >
         {cargando ? <Loader size={15} className="animate-spin" /> : <Search size={15} />}
         {cargando ? "Analizando con IA..." : "Buscar ofertas compatibles"}
       </button>
 
       {resultado && (
-        <div className="bg-emerald-500/8 border border-emerald-500/20 rounded-2xl p-6 flex items-start gap-4">
-          <div className="w-8 h-8 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0">
+        <div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: "16px", padding: "20px 24px", display: "flex", alignItems: "flex-start", gap: "16px" }}>
+          <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(16,185,129,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <CheckCircle size={16} className="text-emerald-400" />
           </div>
           <div>
-            <p className="text-emerald-400 font-medium mb-1">{resultado.mensaje}</p>
-            <p className="text-gray-500 text-sm">
-              Resumen enviado por Telegram · <a href="/ofertas" className="text-blue-400 hover:text-blue-300 transition-colors">Ver en Ofertas →</a>
+            <p style={{ color: "#34D399", fontWeight: 500, marginBottom: "4px", fontSize: "14px" }}>{resultado.mensaje}</p>
+            <p style={{ color: "#6B7280", fontSize: "13px" }}>
+              Resumen enviado por Telegram · <a href="/ofertas" style={{ color: "#60A5FA" }}>Ver en Ofertas →</a>
             </p>
           </div>
         </div>
