@@ -1,4 +1,5 @@
 "use client"
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css";
 import Link from "next/link";
 import { Briefcase, LayoutDashboard, User, Kanban } from "lucide-react";
