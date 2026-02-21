@@ -1,4 +1,4 @@
-import pdfParse from "pdf-parse"
+import { extractText } from "unpdf"
 
 export async function POST(request) {
   try {
@@ -9,10 +9,10 @@ export async function POST(request) {
       return Response.json({ error: "No se recibió ningún archivo" }, { status: 400 })
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const data = await pdfParse(buffer)
+    const buffer = await file.arrayBuffer()
+    const { text } = await extractText(new Uint8Array(buffer), { mergePages: true })
 
-    return Response.json({ texto: data.text })
+    return Response.json({ texto: text })
   } catch (error) {
     console.log("ERROR PDF:", error.message)
     return Response.json({ error: "No se pudo extraer el texto del PDF" }, { status: 500 })
