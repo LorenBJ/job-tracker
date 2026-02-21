@@ -165,15 +165,15 @@ Link: ${o.link}`).join("\n\n")}`,
   }
 }
 
-async function guardarOfertasEnSupabase(ofertas) {
-  if (!ofertas || ofertas.length === 0) {
-    console.log("NO HAY OFERTAS PARA GUARDAR")
-    return
-  }
+async function guardarOfertasEnSupabase(ofertas, userId) {
+  if (!ofertas || ofertas.length === 0) return
 
-  console.log("INTENTANDO GUARDAR:", ofertas.length, "ofertas")
+  const supabaseServer = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY  // service key para bypass RLS desde el servidor
+  )
 
-  const { error } = await supabase
+  const { error } = await supabaseServer
     .from("ofertas")
     .insert(
       ofertas.map(o => ({
@@ -184,6 +184,7 @@ async function guardarOfertasEnSupabase(ofertas) {
         fuente: o.fuente,
         fecha: o.fecha,
         postulado: false,
+        user_id: userId,
       }))
     )
 
@@ -195,10 +196,13 @@ export async function POST(request) {
   const { cv, rol, ubicacion, categoria } = await request.json()
 
   try {
+    // Obtener usuario de la sesión
+    const supabaseServer = await createSupabaseServer()
+    const { data: { user } } = await supabaseServer.auth.getUser()
+    const userId = user?.id || null
+
     const urls = obtenerUrls(categoria, ubicacion)
     const ofertas = await buscarOfertasComputrabajo(urls)
-
-    console.log("TOTAL OFERTAS:", ofertas.length)
 
     if (ofertas.length === 0) {
       return Response.json({ error: "No se encontraron ofertas" }, { status: 404 })
@@ -206,7 +210,7 @@ export async function POST(request) {
 
     const { html: analisis, ofertas: ofertasCompatibles } = await analizarCompatibilidad(ofertas, cv, rol)
 
-    await guardarOfertasEnSupabase(ofertasCompatibles)
+    await guardarOfertasEnSupabase(ofertasCompatibles, userId)
 
     await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: "POST",
